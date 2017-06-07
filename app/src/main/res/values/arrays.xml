@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="paint_color">
+        <item>--蓝--</item>
+        <item>--黑--</item>
+        <item>--青--</item>
+        <item>--红--</item>
+        <item>--黄--</item>
+    </string-array>
+    <string-array name="paint_line">
+        <item>--4--</item>
+        <item>--6--</item>
+        <item>--8--</item>
+        <item>--10--</item>
+        <item>--12--</item>
+    </string-array>
+    <string-array name="paint_action">
+        <item>--选择操作--</item>
+        <item>--手绘--</item>
+        <item>--擦除--</item>
+        <item>--清空--</item>
+        <item>--画线--</item>
+        <item>--画圆--</item>
+    </string-array>
+    <string-array name="paint_word">
+        <item>阳光</item>
+        <item>视翰</item>
+        <item>北京</item>
+        <item>OK</item>
+        <item>YES</item>
+    </string-array>
+
+
+
+</resources>

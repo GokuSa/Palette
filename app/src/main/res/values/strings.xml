@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Sketchpad</string>
+    <string name="title_activity_sketchpad">SketchpadActivity</string>
+</resources>
