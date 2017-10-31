@@ -24,6 +24,10 @@ import beijing.hanhua.sketchpad.netty.NettyClient;
 * 2.接受服务器数据，同步发送端画板
 * 3.退出，注销画板
 *
+* 橡皮擦、清除只能针对自己的画板
+* 创建者的清空直接清空所有画板包括参与者
+* 视频源关联绘画内容，也就是切换视频源需要同时切换画板内容，打算采用sqlite存储不同绘画数据，切换时即时绘制
+*
 */
 public class SketchpadActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "SketchpadActivity";

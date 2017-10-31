@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+       <!-- <variable
+            name="paletteViewModel"
+            type="beijing.hanhua.sketchpad.activity.PaletteViewModel"/>-->
+        <variable
+            name="isPaintTypeVisible"
+            type="boolean"/>
+        <import type="android.view.View"/>
+    </data>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".activity.SketchpadActivity">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_one"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="one"
+            android:text="one"/>
+        <Button
+            android:id="@+id/btn_two"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="two"
+            android:text="two"/>
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!--画板-->
+        <beijing.hanhua.sketchpad.customview.PaletteView
+            android:id="@+id/palette"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <!--右侧画板工具栏-->
+        <LinearLayout
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="150dp"
+            android:layout_marginTop="100dp"
+            android:layout_alignParentEnd="true"
+            android:orientation="vertical">
+            <!--画笔属性设置-->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:id="@+id/scrollView"
+                >
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_penControl"
+                        style="@style/PaletteText"
+                        android:drawableStart="@drawable/bg_paint_type"
+                        android:onClick="switchPaintType"
+                        android:text="画笔"/>
+
+                    <LinearLayout
+                        android:id="@+id/ll_penConcext"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/colorblack"
+                        android:orientation="vertical"
+                        android:visibility="@{isPaintTypeVisible?View.VISIBLE:View.GONE}"
+                        >
+
+                        <TextView
+                            android:id="@+id/tv_drawPath"
+                            style="@style/PaletteText"
+                            android:drawableStart="@drawable/bg_draw_path"
+                            android:onClick="setDrawPaintType"
+                            android:paddingStart="50dp"
+                            android:text="自由画笔"
+                            android:textSize="13sp"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_drawLine"
+                            style="@style/PaletteText"
+                            android:drawableStart="@drawable/bg_draw_line"
+                            android:onClick="setDrawPaintType"
+                            android:paddingStart="50dp"
+                            android:text="直线"
+                            android:textSize="13sp"
+                            />
+
+                        <TextView
+                            android:id="@+id/tv_drawOval"
+                            style="@style/PaletteText"
+                            android:drawableStart="@drawable/bg_draw_oval"
+                            android:onClick="setDrawPaintType"
+                            android:paddingStart="50dp"
+                            android:text="画圆"
+                            android:textSize="13sp"
+                            />
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+
+            <TextView
+                android:id="@+id/tv_clearPalette"
+                style="@style/PaletteText"
+                android:drawableStart="@drawable/mt_huaban_eraseall"
+                android:onClick="operatePalette"
+                android:text="清空画板"
+                />
+
+            <TextView
+                android:id="@+id/tv_erase"
+                style="@style/PaletteText"
+                android:drawableStart="@drawable/mt_huaban_erase"
+                android:onClick="operatePalette"
+                android:text="橡皮擦"
+                />
+
+            <TextView
+                android:id="@+id/tv_openPalette"
+                style="@style/PaletteText"
+                android:drawableStart="@drawable/mt_huaban_kaiqi"
+                android:onClick="operatePalette"
+                android:text="打开画板"
+                />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</LinearLayout>
+</layout>
