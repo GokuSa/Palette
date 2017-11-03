@@ -14,7 +14,9 @@ import java.util.List;
 public class DrawingOperation {
     //所在群组，群内成员可收到其他成员的画板信息，开启画板就加入群组
     private int groupId;
-
+    private int mUserId;
+    //信源地址
+    private String mUrl;
     /**
      * 绘制模式
      * DRAW_LINE = 5 DRAW_OVAL = 6  DRAW_TEXT = 7
@@ -22,7 +24,6 @@ public class DrawingOperation {
     private int mDrawMode;
     //操作识别代码
     private String action;
-
     //画板颜色
     private int mDrawColor;
     private int mStrokeWidth;
@@ -34,6 +35,7 @@ public class DrawingOperation {
     private Point mPointDown;
 //    手指实时位置点
     private Point mPointCurrent;
+    //绘制路径，即自由绘制时的点集合
     private List<Point> mPoints;
     public DrawingOperation() {
 
@@ -47,6 +49,13 @@ public class DrawingOperation {
         this.groupId = roomId;
     }
 
+    public int getUserId() {
+        return mUserId;
+    }
+
+    public void setUserId(int userId) {
+        mUserId = userId;
+    }
 
     public int getDrawMode() {
         return mDrawMode;
@@ -120,14 +129,23 @@ public class DrawingOperation {
         mPointDown = pointDown;
     }
 
+
+    public String getUrl() {
+        return mUrl;
+    }
+
+    public void setUrl(String url) {
+        mUrl = url;
+    }
+
     @Override
     public String toString() {
         return "DrawingOperation{" +
-                "groupId=" + groupId +
-                ", action='" + action + '\'' +
-                ", mDrawColor=" + mDrawColor +
-                ", width=" + width +
-                ", mText='" + mText + '\'' +
+                "mUrl=" + mUrl +
+                "mUserId=" + mUserId +
+                ", mDrawMode=" + mDrawMode +
+                ", mPointDown=" + mPointDown +
+                ", mPointCurrent=" + mPointCurrent +
                 ", mPoints=" + mPoints +
                 '}';
     }

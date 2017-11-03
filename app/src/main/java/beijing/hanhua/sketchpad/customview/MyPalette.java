@@ -1,5 +1,6 @@
 package beijing.hanhua.sketchpad.customview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -23,14 +24,23 @@ import android.view.SurfaceView;
 
 import com.google.gson.Gson;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import beijing.hanhua.sketchpad.activity.PaletteActivity;
 import beijing.hanhua.sketchpad.entity.DrawingOperation;
+
+import static beijing.hanhua.sketchpad.activity.PaletteActivity.CLEAR;
+import static beijing.hanhua.sketchpad.activity.PaletteActivity.DRAW_LINE;
+import static beijing.hanhua.sketchpad.activity.PaletteActivity.DRAW_OVAL;
+import static beijing.hanhua.sketchpad.activity.PaletteActivity.DRAW_PATH;
+import static beijing.hanhua.sketchpad.activity.PaletteActivity.DRAW_TEXT;
+import static beijing.hanhua.sketchpad.activity.PaletteActivity.ERASE;
 
 /**
  * Created by Administrator on 2016/7/11.
- * 画板视图，
+ * 我的画板视图，专门绘制当前用户自己的操作
  * 因为SurfaceView可以在子线程更新视图，所以使用SurfaceView执行画画功能，
  * 具体有自由绘画，画直线，椭圆，擦除，清空功能
  * <p>
@@ -39,17 +49,9 @@ import beijing.hanhua.sketchpad.entity.DrawingOperation;
  * 从actionDown到actionUP定义为一个Operation，使用集合存储在内存中，
  * 这样在切换信源时先清空画板，再根据id对于的数据重绘
  */
-public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, Handler.Callback {
-    private static final String TAG = PaletteView.class.getSimpleName();
-    public static final int DRAW_PATH = 0;
-    public static final int SEND = 1;
-    public static final int ERASE = 2;
-    private static final int RESET = 3;
-    private static final int ACTION_DOWN = 4;
-    private static final int DRAW_LINE = 5;
-    private static final int DRAW_OVAL = 6;
-    private static final int DRAW_TEXT = 7;
-    private static final int CLEAR = 8;
+public class MyPalette extends SurfaceView implements SurfaceHolder.Callback, Handler.Callback {
+    private static final String TAG = MyPalette.class.getSimpleName();
+
     private SurfaceHolder mSurfaceHolder;
     private Paint mPaint;
     private Bitmap mBitmap;
@@ -61,10 +63,7 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
     private volatile boolean mIsDrawing;
     private Paint mBitmapPaint;
     private Gson mGson = new Gson();
-
-    //当前视频源
-    private String mCurrentVideoSource;
-    //   当前视频源绘制操作
+    //   当前用户的视频源绘制操作
     private List<DrawingOperation> mCurrentDrawingOperation;
     //画板集合，每个源对应一个画板,使用源地址作为键
     private ArrayMap<String, List<DrawingOperation>> mPaletteMap = new ArrayMap<>();
@@ -80,20 +79,24 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
     private int mStrokeWidth;
 
     private String mText = "";
+    //当前用户
+    private int mUserId;
+    private String mVideoSourceUrl;
 
-    public PaletteView(Context context) {
+    public MyPalette(Context context) {
         super(context);
         init();
     }
 
-    public PaletteView(Context context, AttributeSet attrs) {
+    public MyPalette(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
     private void init() {
         mSurfaceHolder = getHolder();
-        setZOrderOnTop(true);
+//        setZOrderOnTop(true);
+        setZOrderMediaOverlay(true);
         mSurfaceHolder.setFormat(PixelFormat.TRANSPARENT);
         mSurfaceHolder.addCallback(this);
         //绘画画笔
@@ -130,9 +133,13 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
         mPaint.setTextSize(20);*/
     }
 
-    //设置视频源及对应的画板操作
+    /**
+     * 设置视频源及对应的画板操作 我的画板只有自己的操作
+     *
+     * @param url
+     */
     public void changeVideoSource(String url) {
-        mCurrentVideoSource = url;
+        mVideoSourceUrl = url;
         clearPalette();
         if (mPaletteMap.containsKey(url)) {
             mCurrentDrawingOperation = mPaletteMap.get(url);
@@ -212,6 +219,12 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
 
     }
 
+    WeakReference<PaletteActivity> mActivityWeakReference;
+
+    public void setActivityWeakReference(PaletteActivity paletteActivity) {
+        mActivityWeakReference = new WeakReference<>(paletteActivity);
+    }
+
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d(TAG, "surfaceCreated: ");
@@ -255,99 +268,30 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
         return true;
     }
 
-    //在View中操作的触摸事件 统一交给HandlerThread处理
+    /**
+     * 在View中操作的触摸事件 统一交给HandlerThread处理
+     * 消息入队的速度跟不上event事件产生的速度,
+     * 在action move 时会漏点,绘制路径不够圆滑，多是直线，棱角明显
+     *  出现ACTION_UP事件发给Handler时action变成action_hover_move
+     * @param event
+     * @return
+     */
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        mHandler.obtainMessage(event.getAction(), event).sendToTarget();
-       /* int x = (int) event.getX();
-        int y = (int) event.getY();
+//        Log.d(TAG, "event:" + event);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                //开始绘制标记
-                mIsDrawing = true;
-                mPath.reset();
-                mPath.moveTo(x, y);
-                mDrawingOperation = new DrawingOperation();
-                mDrawingOperation.setPointDown(new Point(x, y));
-                mDrawingOperation.setDrawMode(mDrawMode);
-                mDrawingOperation.setDrawColor(mDrawColor);
-                mDrawingOperation.setStrokeWidth(mStrokeWidth);
-                mDrawingOperation.setText(mText);
-                mCurrentDrawingOperation.add(mDrawingOperation);
-                if (mDrawMode == DRAW_TEXT) {
-                    handleDrawingOperation(mDrawingOperation);
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (mDrawMode == DRAW_LINE) {
-                    Point pointCurrent = mDrawingOperation.getPointCurrent();
-                    if (pointCurrent != null) {
-                        pointCurrent.set(x, y);
-                    } else {
-                        pointCurrent = new Point(x, y);
-                        mDrawingOperation.setPointCurrent(pointCurrent);
-                    }
-                    //绘制直线，先清空以前的绘制命令，再发送当前的，保证当前最新的优先执行，提高相应速度
-                    mHandler.removeCallbacks(mDrawLine);
-                    mHandler.post(mDrawLine);
-                } else if (mDrawMode == DRAW_OVAL) {
-                    Point pointCurrent = mDrawingOperation.getPointCurrent();
-                    if (pointCurrent != null) {
-                        pointCurrent.set(x, y);
-                    } else {
-                        pointCurrent = new Point(x, y);
-                        mDrawingOperation.setPointCurrent(pointCurrent);
-                    }
-                    //绘制椭圆，先清空以前的绘制命令，再发送当前的，保证当前最新的优先执行，提高相应速度
-                    mHandler.removeCallbacks(mDrawOval);
-                    mHandler.post(mDrawOval);
-
-                } else if (mDrawMode == DRAW_PATH) {
-                    //设置绘制限制，移动超过2个像素才发送绘制命令和记录路径
-                    if (Math.abs(x - mOldX) > 2 || Math.abs(y - mOldY) > 2) {
-                        List<Point> points = mDrawingOperation.getPoints();
-                        if (null == points) {
-                            points = new ArrayList<>();
-                            mDrawingOperation.setPoints(points);
-                        }
-                        mPath.quadTo(mOldX, mOldY, x, y);
-                        points.add(new Point(x, y));
-                        mHandler.post(mDrawPath);
-                    }
-                }
-
-                break;
-            case MotionEvent.ACTION_UP:
-                Log.d(TAG, "event:" + event);
-                //结束绘制标记
-                mIsDrawing = false;
-                mPath.reset();
-                //边界检查，确保x和y在画板大小范围内
-                x = Math.max(0, Math.min(x, mWidth));
-                y = Math.max(0, Math.min(y, mHeight));
-                if (mDrawMode == ERASE) {
-                    Log.d(TAG, "ease up");
-                    mDrawingOperation.setPointCurrent(new Point(x,y));
-                    mHandler.post(mEraser);
-                } else if (mDrawMode == DRAW_LINE) {
-                    Log.d(TAG, "line up");
-                    mDrawingOperation.getPointCurrent().set(x, y);
-                    mHandler.removeCallbacks(mDrawLine);
-                    mHandler.post(mDrawLine);
-                } else if (mDrawMode == DRAW_OVAL) {
-                    Log.d(TAG, "oval up");
-                    mDrawingOperation.getPointCurrent().set(x, y);
-                    mHandler.removeCallbacks(mDrawOval);
-                    mHandler.post(mDrawOval);
-                }else if(mDrawMode == DRAW_PATH) {
-                    //当手指离开界面，停止绘制时，清空消息队列中没执行的draw消息，否则会阻塞后续消息
-                    mHandler.removeCallbacks(mDrawPath);
-                }
-//                mHandler.sendEmptyMessage(SEND);
-                break;
+            case MotionEvent.ACTION_MOVE: {
+                mHandler.obtainMessage(event.getAction(),event).sendToTarget();
+            }
+            break;
+            case MotionEvent.ACTION_UP: {
+//                子线程处理大量move耗时绘制操作，队列可能过长，此时清空队列执行 up
+                mHandler.removeMessages(MotionEvent.ACTION_MOVE);
+                mHandler.obtainMessage(event.getAction(),event).sendToTarget();
+            }
         }
-        mOldX = x;
-        mOldY = y;*/
         return true;
     }
 
@@ -359,6 +303,7 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
     *  落点一定在画板范围内，否则不会接收到触摸事件
    */
     private void handleActionDown(int x, int y) {
+        Log.d(TAG, "handleActionDown() called with: x = [" + x + "], y = [" + y + "]");
         //开始绘制标记
         mIsDrawing = true;
         mPath.reset();
@@ -366,6 +311,8 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
         mDrawingOperation = new DrawingOperation();
         mDrawingOperation.setPointDown(new Point(x, y));
         mDrawingOperation.setDrawMode(mDrawMode);
+        mDrawingOperation.setUrl(mVideoSourceUrl);
+        mDrawingOperation.setUserId(mUserId);
         mDrawingOperation.setDrawColor(mDrawColor);
         mDrawingOperation.setStrokeWidth(mStrokeWidth);
         mDrawingOperation.setText(mText);
@@ -377,6 +324,7 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
 
     //    处理手指移动事件
     private void handleActionMove(int x, int y) {
+        Log.d(TAG, "handleActionMove() called with: x = [" + x + "], y = [" + y + "]");
         if (mDrawMode == DRAW_LINE) {
             Point pointCurrent = mDrawingOperation.getPointCurrent();
             if (pointCurrent != null) {
@@ -415,7 +363,9 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
 
     //    处理手指离开屏幕的事件
     private void handleActionUp(int x, int y) {
+        Log.d(TAG, "handleActionUp() called with: x = [" + x + "], y = [" + y + "]");
         //结束绘制标记
+        mHandler.removeMessages(MotionEvent.ACTION_MOVE);
         mIsDrawing = false;
         mPath.reset();
         //边界检查，确保x和y在画板大小范围内
@@ -433,8 +383,21 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
             Log.d(TAG, "oval up");
             mDrawingOperation.getPointCurrent().set(x, y);
             drawOval(mDrawingOperation);
+        } else if (mDrawMode == DRAW_PATH) {
+            List<Point> points = mDrawingOperation.getPoints();
+            if (points == null || points.size() < 2) {
+                return;
+            }
         }
-//                mHandler.sendEmptyMessage(SEND);
+        //发送
+        mHandler.post(() -> {
+            PaletteActivity paletteActivity = mActivityWeakReference.get();
+            if (paletteActivity != null) {
+                String json = mGson.toJson(mDrawingOperation);
+                Log.d(TAG, "send " + json);
+                paletteActivity.send(json);
+            }
+        });
     }
 
     //绘制文字
@@ -452,7 +415,7 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
         }
     }
 
-    //    动态绘制直线
+    //    动态绘制直线 todo 优化
     private void drawLine(DrawingOperation drawingOperation) {
         Canvas canvas = null;
         try {
@@ -486,7 +449,6 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
             Point pointDown = drawingOperation.getPointDown();
             Point pointCurrent = drawingOperation.getPointCurrent();
             RectF rectF = new RectF(pointDown.x, pointDown.y, pointCurrent.x, pointCurrent.y);
-//            mRectF.set(mPointX.get(0), mPointY.get(0), msg.arg1, msg.arg2);
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             //这是最终一绘
             if (!mIsDrawing) {
@@ -538,31 +500,6 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
     }
 
 
-    private Runnable mDrawLine = new Runnable() {
-        @Override
-        public void run() {
-            drawLine(mDrawingOperation);
-        }
-    };
-    private Runnable mDrawOval = new Runnable() {
-        @Override
-        public void run() {
-            drawOval(mDrawingOperation);
-        }
-    };
-    private Runnable mDrawPath = new Runnable() {
-        @Override
-        public void run() {
-            drawPath();
-        }
-    };
-    private Runnable mEraser = new Runnable() {
-        @Override
-        public void run() {
-            erase(mDrawingOperation);
-        }
-    };
-
     //清空画板
     private void clearPalette() {
         Canvas canvas = null;
@@ -583,8 +520,18 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
     public void clearPaletteByHand() {
         mCurrentDrawingOperation.clear();
         clearPalette();
+//        发给服务器
+        mHandler.post(() -> {
+            PaletteActivity paletteActivity = mActivityWeakReference.get();
+            if (paletteActivity != null) {
+                DrawingOperation drawingOperation = new DrawingOperation();
+                drawingOperation.setDrawMode(CLEAR);
+                drawingOperation.setUrl(mVideoSourceUrl);
+                drawingOperation.setUserId(mUserId);
+                paletteActivity.send(mGson.toJson(mDrawingOperation));
+            }
+        });
     }
-
 
     private void send() {
 //        String message = mGson.toJson(mData);
@@ -622,5 +569,8 @@ public class PaletteView extends SurfaceView implements SurfaceHolder.Callback, 
         mDrawMode = DRAW_OVAL;
     }
 
-
+    //设置当前用户id，发送到服务端的标识
+    public void setUserId(int userId) {
+        mUserId = userId;
+    }
 }
