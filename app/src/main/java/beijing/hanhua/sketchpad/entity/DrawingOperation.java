@@ -41,6 +41,13 @@ public class DrawingOperation {
 
     }
 
+    public boolean isEraseAreaValid() {
+        if(mPointCurrent==null||mPointDown==null)return false;
+//        位置偏移必须足够大
+        return (Math.abs(mPointDown.x - mPointCurrent.x) >= 4 || Math.abs(mPointDown.y - mPointCurrent.y) >= 4);
+
+    }
+
     public int getGroupId() {
         return groupId;
     }

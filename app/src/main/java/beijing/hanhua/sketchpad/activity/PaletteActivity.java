@@ -1,6 +1,7 @@
 package beijing.hanhua.sketchpad.activity;
 
 import android.databinding.DataBindingUtil;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.WorkerThread;
 import android.support.v7.app.AppCompatActivity;
@@ -57,6 +58,7 @@ public class PaletteActivity extends AppCompatActivity {
         if (Common.GetIpAddress().equals(host)) {
             host = "172.168.1.156";
             mUserid=2;
+            mBinding.palette.setPaintColor(Color.YELLOW);
         }
         mBinding.palette.setUserId(mUserid);
         Log.d(TAG, host+" __ "+mUserid);

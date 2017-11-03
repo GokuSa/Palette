@@ -75,6 +75,10 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
     private int mWidth;
     private int mHeight;
     private String mCurrenVideoUrl = "";
+    /**
+     * 当前信源的所有用户操作
+     */
+    private SparseArray<List<DrawingOperation>> mUsersOperation = null;
 
     public PublicPalette(Context context) {
         super(context);
@@ -129,11 +133,14 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
 
     //切换视频源及获取对应的多用户画板操作,然后绘制
     public void changeVideoSource(String url) {
-        Message message = mHandler.obtainMessage();
+       /* Message message = mHandler.obtainMessage();
         message.what = MSG_CHANGE_VIDEO_SORUCE;
         message.obj = url;
-        message.sendToTarget();
-//        mHandler.obtainMessage(MSG_CHANGE_VIDEO_SORUCE, url).sendToTarget();
+        message.sendToTarget();*/
+        if (TextUtils.isEmpty(url)) {
+            return;
+        }
+        mHandler.obtainMessage(MSG_CHANGE_VIDEO_SORUCE, url).sendToTarget();
     }
 
     /**
@@ -141,7 +148,7 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
      * 不同用户需要使用不同层layer 否则擦除会清除其他用户数据
      * 每个用户的数据在自己层绘制后合并到屏幕
      *
-     * @param allDrawingOperations 所有用户操作
+     * @param allDrawingOperations 当前信源的所有用户操作
      */
     @WorkerThread
     private void handleAllUsersOperation(SparseArray<List<DrawingOperation>> allDrawingOperations) {
@@ -151,6 +158,7 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
         for (int index = 0; index < userCount; index++) {
 //                    获取这个用户的操作
             List<DrawingOperation> drawingOperations = allDrawingOperations.valueAt(index);
+            Log.d(TAG, "handleAllUsersOperation:" + drawingOperations);
             handleSingleUser(drawingOperations);
         }
 
@@ -170,6 +178,7 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
             canvas = mSurfaceHolder.lockCanvas();
             int saveCount = mCanvas.saveLayer(0, 0, mWidth, mHeight, null, Canvas.ALL_SAVE_FLAG);
             for (DrawingOperation drawingOperation : drawingOperations) {
+                mPaint.setColor(drawingOperation.getDrawColor());
                 switch (drawingOperation.getDrawMode()) {
                     case DRAW_TEXT:
                         mCanvas.drawText(drawingOperation.getText(), drawingOperation.getPointDown().x, drawingOperation.getPointDown().y, mPaint);
@@ -231,7 +240,6 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
      */
 
     public void updateDrawingOperation(String receive) {
-        Log.d(TAG, "updateDrawingOperation: ");
         try {
             DrawingOperation drawingOperation = mGson.fromJson(receive, DrawingOperation.class);
             Message message = mHandler.obtainMessage();
@@ -254,7 +262,7 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
         mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         //以mbitmap为内容的画布,用来记录以前的绘制图形，
         mCanvas = new Canvas(mBitmap);
-        mCanvas.drawColor(Color.WHITE);
+//        mCanvas.drawColor(Color.WHITE);
 
     }
 
@@ -305,10 +313,14 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
     @WorkerThread
     private void handleVideoSourceChange(String url) {
         mCurrenVideoUrl = url;
+//        首先清空当前画板
         clearPalette();
         if (mPublicPaletteMap.containsKey(url)) {
-            SparseArray<List<DrawingOperation>> usersOperation = mPublicPaletteMap.get(url);
-            handleAllUsersOperation(usersOperation);
+            mUsersOperation = mPublicPaletteMap.get(url);
+            handleAllUsersOperation(mUsersOperation);
+        } else {
+            mUsersOperation = new SparseArray<>();
+            mPublicPaletteMap.put(url, mUsersOperation);
         }
     }
 
@@ -318,12 +330,13 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
         String url = drawingOperation.getUrl();
         if (TextUtils.isEmpty(url)) return;
         //这个信源的所有用户操作
-        SparseArray<List<DrawingOperation>> allUsersOperations = mPublicPaletteMap.get(url);
-        if (allUsersOperations == null) {
+//        SparseArray<List<DrawingOperation>> allUsersOperations = mPublicPaletteMap.get(url);
+        SparseArray<List<DrawingOperation>> allUsersOperations = mUsersOperation;
+        /*if (allUsersOperations == null) {
             allUsersOperations = new SparseArray<>();
 //            缓存此信源的所有用户数据
             mPublicPaletteMap.put(url, allUsersOperations);
-        }
+        }*/
 //        获取这个用户的操作
         List<DrawingOperation> drawingOperations = allUsersOperations.get(drawingOperation.getUserId());
         if (drawingOperations == null) {
@@ -333,21 +346,26 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
         }
 //        处理单个操作
         if (drawingOperation.getDrawMode() == CLEAR) {
+            Log.d(TAG, "handleUpdateOperation: clear");
             //当操作不为空才执行 防止无效重复复制
             if (drawingOperations.size() > 0) {
                 drawingOperations.clear();
                 if (mCurrenVideoUrl.equals(url)) {
-                    // 正在操作当前信源 原因立刻重绘
-                    handleAllUsersOperation(mPublicPaletteMap.get(url));
+                    clearPalette();
+                    // 正在操作当前信源 立刻重绘
+//                    handleAllUsersOperation(mPublicPaletteMap.get(url));
+                    handleAllUsersOperation(allUsersOperations);
                 }
             }
         } else if (drawingOperation.getDrawMode() == ERASE) {
+            Log.d(TAG, "handleUpdateOperation: erease");
             //当操作不为空的时候才执行擦除 否则无意义 并且导致重绘
             if (drawingOperations.size() > 0) {
                 drawingOperations.add(drawingOperation);
                 if (mCurrenVideoUrl.equals(url)) {
+                    clearPalette();
                     // 正在操作当前信源 原因立刻重绘
-                    handleAllUsersOperation(mPublicPaletteMap.get(url));
+                    handleAllUsersOperation(allUsersOperations);
                 }
             }
         } else {
@@ -356,6 +374,48 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
                 handleSingleOperation(drawingOperation);
             }
         }
+    }
+
+    @Deprecated
+    private void handleUpdateOperation2(DrawingOperation drawingOperation) {
+        if (null == drawingOperation) return;
+        String url = drawingOperation.getUrl();
+        if (TextUtils.isEmpty(url)) return;
+//            获取这个信源所有用户的操作
+        SparseArray<List<DrawingOperation>> allUsersOperations = mUsersOperation;
+//            根据用户id，获取这个操作所属的集合
+        List<DrawingOperation> drawingOperations = allUsersOperations.get(drawingOperation.getUserId());
+        if (drawingOperations == null) {
+            drawingOperations = new ArrayList<>();
+            allUsersOperations.put(drawingOperation.getUserId(), drawingOperations);
+        }
+        if (mCurrenVideoUrl.equals(drawingOperation.getUrl())) {
+            if (drawingOperation.getDrawMode() == CLEAR) {
+                Log.d(TAG, "handleUpdateOperation: clear");
+                //当操作不为空才执行 防止无效重复复制
+                if (drawingOperations.size() > 0) {
+//                    清空操作
+                    drawingOperations.clear();
+                    clearPalette();
+                    // 正在操作当前信源 立刻重绘
+                    handleAllUsersOperation(allUsersOperations);
+                }
+            } else if (drawingOperation.getDrawMode() == ERASE) {
+                Log.d(TAG, "handleUpdateOperation: erease");
+                //当操作不为空的时候才执行擦除 否则无意义 并且导致重绘
+                if (drawingOperations.size() > 0) {
+                    drawingOperations.add(drawingOperation);
+                    clearPalette();
+                    handleAllUsersOperation(allUsersOperations);
+                }
+            } else {
+                drawingOperations.add(drawingOperation);
+                handleSingleOperation(drawingOperation);
+            }
+        } else {
+            drawingOperations.add(drawingOperation);
+        }
+
     }
 
     /**
@@ -369,6 +429,7 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
         Canvas canvas = null;
         try {
             canvas = mSurfaceHolder.lockCanvas();
+            mPaint.setColor(drawingOperation.getDrawColor());
             switch (drawingOperation.getDrawMode()) {
                 case DRAW_TEXT:
                     mCanvas.drawText(drawingOperation.getText(), drawingOperation.getPointDown().x, drawingOperation.getPointDown().y, mPaint);
@@ -399,7 +460,7 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
                 }
                 break;
             }
-            canvas.drawColor(Color.TRANSPARENT);
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
         } finally {
             if (canvas != null) {
@@ -430,23 +491,6 @@ public class PublicPalette extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
-    //擦除操作，手指起点和落点之间的矩形区域会被擦除 todo 显示矩形区域
-    private void erase(DrawingOperation drawingOperation) {
-        Canvas canvas = null;
-        try {
-            canvas = mSurfaceHolder.lockCanvas();
-            Point pointDown = drawingOperation.getPointDown();
-            Point pointCurrent = drawingOperation.getPointCurrent();
-            RectF rectF = new RectF(pointDown.x, pointDown.y, pointCurrent.x, pointCurrent.y);
-            mCanvas.drawRect(rectF, mPaintErase);
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-            canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
-        } finally {
-            if (canvas != null) {
-                mSurfaceHolder.unlockCanvasAndPost(canvas);
-            }
-        }
-    }
 
     //清空画板
     @WorkerThread

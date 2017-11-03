@@ -19,8 +19,6 @@
         android:layout_height="match_parent"
         tools:context=".activity.SketchpadActivity"
         >
-
-
         <!--公共画板 显示其他用户的数据-->
         <beijing.hanhua.sketchpad.customview.PublicPalette
             android:id="@+id/palette_public"
