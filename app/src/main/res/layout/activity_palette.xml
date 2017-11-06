@@ -81,13 +81,21 @@
                 android:onClick="changeVideoSouce"
                 android:text="画面4"/>
         </LinearLayout>
-        <!--右侧画板工具栏 todo 使用移到fragment，使用viewpager实现 -->
+
+        <FrameLayout
+            android:id="@+id/palette_tools_container"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="100dp"
+            />
         <LinearLayout
             android:layout_width="200dp"
             android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
             android:layout_marginBottom="150dp"
             android:layout_marginTop="100dp"
+            android:visibility="gone"
             android:orientation="vertical">
             <!--画笔属性设置-->
             <ScrollView

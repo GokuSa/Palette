@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools">
+<data>
+    <variable
+        name="paletteTools"
+        type="beijing.hanhua.sketchpad.PaletteToolsFragment"/>
+</data>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/ll_paint_type"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorblack"
+        android:orientation="vertical"
+        />
+    </ScrollView>
+
+       <!-- <TextView
+            android:id="@+id/tv_drawPath"
+            style="@style/PaletteText"
+            android:drawableStart="@drawable/bg_draw_path"
+            android:onClick="@{paletteTools.setDrawPaintType}"
+            android:paddingStart="50dp"
+            android:text="自由画笔"
+            android:textSize="13sp"
+            />
+
+        <TextView
+            android:id="@+id/tv_drawLine"
+            style="@style/PaletteText"
+            android:drawableStart="@drawable/bg_draw_line"
+            android:onClick="@{paletteTools.setDrawPaintType}"
+            android:paddingStart="50dp"
+            android:text="直线"
+            android:textSize="13sp"
+            />
+
+        <TextView
+            android:id="@+id/tv_drawOval"
+            style="@style/PaletteText"
+            android:drawableStart="@drawable/bg_draw_oval"
+            android:onClick="@{paletteTools.setDrawPaintType}"
+            android:paddingStart="50dp"
+            android:text="画圆"
+            android:textSize="13sp"
+            />-->
+
+
+</layout>

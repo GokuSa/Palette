@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="palette_blue">#0000FF</color>
+    <color name="palette_green">#00FF00</color>
+    <color name="palette_cyan">#00FFFF</color>
+    <color name="palette_red">#FF0000</color>
+    <color name="palette_pink">#EE00EE</color>
+    <color name="palette_orange">#FF7F00</color>
+    <color name="palette_black">#000000</color>
+    <color name="palette_yellow">#FFFF00</color>
+
+</resources>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    >
+
+    <data>
+        <variable
+            name="paletteTools"
+            type="beijing.hanhua.sketchpad.PaletteToolsFragment"/>
+    </data>
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:id="@+id/ll_paint_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        />
+</ScrollView>
+
+
+      <!--  <TextView
+            android:id="@+id/tv_text_one"
+            style="@style/PaletteText"
+            android:onClick="@{paletteTools.setDrawText}"
+            android:paddingStart="50dp"
+            android:text="神州视翰"
+            android:textSize="13sp"
+            />
+
+        <TextView
+            android:id="@+id/tv_text_two"
+            style="@style/PaletteText"
+            android:onClick="@{paletteTools.setDrawText}"
+            android:paddingStart="50dp"
+            android:text="shine"
+            android:textSize="13sp"
+            />-->
+
+</layout>

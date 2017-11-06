@@ -57,6 +57,10 @@ public class Common {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 dpVal, context.getResources().getDisplayMetrics());
     }
+    public static int sp2px(Context context, float dpVal) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
+                dpVal, context.getResources().getDisplayMetrics());
+    }
 
     public static void backHome(Context context) {
         Intent intent = new Intent(context, MainActivity.class);

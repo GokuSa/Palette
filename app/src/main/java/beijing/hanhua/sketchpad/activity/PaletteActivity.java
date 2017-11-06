@@ -15,6 +15,7 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.SocketException;
 
+import beijing.hanhua.sketchpad.PaletteToolsFragment;
 import beijing.hanhua.sketchpad.R;
 import beijing.hanhua.sketchpad.databinding.ActivityPaletteBinding;
 import beijing.hanhua.sketchpad.util.Common;
@@ -41,28 +42,36 @@ public class PaletteActivity extends AppCompatActivity {
     public static final int MSG_CHANGE_VIDEO_SORUCE = 9;
     public static final int MSG_UPDATE_OPERATION = 10;
     private ActivityPaletteBinding mBinding;
-    private volatile  boolean start=true;
+    private volatile boolean start = true;
     private DatagramSocket mDatagramSocket;
     private String host = "172.168.54.25";
-    private int port=10332;
-    private int mUserid=1;
+    private int port = 10332;
+    private int mUserid = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_palette);
-        mBinding.setIsPaintTypeVisible(false);
+
+        if (savedInstanceState == null) {
+            PaletteToolsFragment paletteToolsFragment = PaletteToolsFragment.newInstance();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.palette_tools_container, paletteToolsFragment, "palette_tools")
+                    .commit();
+        }
 //        切换信源时，两个画板成对切换
         mBinding.palette.changeVideoSource("one");
         mBinding.palettePublic.changeVideoSource("one");
         mBinding.palette.setActivityWeakReference(this);
         if (Common.GetIpAddress().equals(host)) {
             host = "172.168.1.156";
-            mUserid=2;
+            mUserid = 2;
             mBinding.palette.setPaintColor(Color.YELLOW);
         }
         mBinding.palette.setUserId(mUserid);
-        Log.d(TAG, host+" __ "+mUserid);
-        new Thread(){
+        Log.d(TAG, host + " __ " + mUserid);
+        new Thread() {
             @Override
             public void run() {
                 startCommunication();
@@ -72,16 +81,15 @@ public class PaletteActivity extends AppCompatActivity {
     }
 
 
-
     private void startCommunication() {
         try {
             mDatagramSocket = new DatagramSocket(port);
             while (start) {
-                byte[] buffer = new byte[1024*100];
-                DatagramPacket packet=new DatagramPacket(buffer,0,buffer.length);
+                byte[] buffer = new byte[1024 * 100];
+                DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length);
                 mDatagramSocket.receive(packet);
                 String receiver = new String(buffer).trim();
-                Log.d(TAG, "get operation "+receiver);
+                Log.d(TAG, "get operation " + receiver);
                 mBinding.palettePublic.updateDrawingOperation(receiver);
             }
         } catch (SocketException e) {
@@ -100,7 +108,7 @@ public class PaletteActivity extends AppCompatActivity {
     public void send(String operation) {
         try {
             byte[] bytes = operation.getBytes();
-            DatagramPacket packet = new DatagramPacket(bytes, bytes.length,Inet4Address.getByName(host),port);
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, Inet4Address.getByName(host), port);
             mDatagramSocket.send(packet);
         } catch (IOException e) {
             e.printStackTrace();
@@ -111,7 +119,7 @@ public class PaletteActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy: ");
-        start=false;
+        start = false;
         if (mDatagramSocket != null) {
             mDatagramSocket.close();
         }
