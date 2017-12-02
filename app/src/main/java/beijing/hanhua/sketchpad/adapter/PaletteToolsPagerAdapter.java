@@ -42,6 +42,8 @@ public class PaletteToolsPagerAdapter extends PagerAdapter {
         return mTitles.get(position);
     }*/
 
+
+
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
         View view = mViews.get(position);

@@ -166,6 +166,7 @@ public class MyPalette extends SurfaceView implements SurfaceHolder.Callback, Ha
             canvas = mSurfaceHolder.lockCanvas();
             if (canvas != null) {
                 for (DrawingOperation drawingOperation : drawingOperations) {
+                    mPaint.setColor(drawingOperation.getDrawColor());
                     switch (drawingOperation.getDrawMode()) {
                         case DRAW_TEXT:
                             mCanvas.drawText(drawingOperation.getText(), drawingOperation.getPointDown().x, drawingOperation.getPointDown().y, mPaint);
@@ -589,9 +590,15 @@ public class MyPalette extends SurfaceView implements SurfaceHolder.Callback, Ha
         mDrawMode = DRAW_PATH;
     }
 
+
+    /**
+     *
+     * @param color 颜色资源id转化后的颜色
+     */
     public void setPaintColor(int color) {
         mDrawColor = color;
         mPaint.setColor(color);
+
     }
 
     public void setPaintWidth(int width) {

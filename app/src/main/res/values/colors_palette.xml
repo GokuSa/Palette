@@ -8,5 +8,6 @@
     <color name="palette_orange">#FF7F00</color>
     <color name="palette_black">#000000</color>
     <color name="palette_yellow">#FFFF00</color>
+    <color name="palette_tool_bg_grey">#78000000</color>
 
 </resources>

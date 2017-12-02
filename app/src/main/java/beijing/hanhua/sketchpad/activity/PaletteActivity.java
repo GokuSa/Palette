@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.WorkerThread;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -21,13 +22,12 @@ import beijing.hanhua.sketchpad.databinding.ActivityPaletteBinding;
 import beijing.hanhua.sketchpad.util.Common;
 
 /**
- * todo 使用tabs+ViewPager + Fragment 实现画板控制栏
  * 解决Fragment 之间通信
  * 多信源 多用户 的画板绘制操作 有绘制直线 椭圆 自由绘制  文字 擦除 清空 基本操作
  * 每个信源对多个用户的操作
  * 所有信源共用两个画板，计划使用两个 SurfaceView 实现，
  * 一个单独绘制自己本地的操作，实时的，一个完整操作（action down 到 action up）结束需要发送到服务器给其他用户同步
- * 一个绘制其他所有用户的绘制数据，非实时，一个个完整的操作，只接受数据 绘制
+ * 一个绘制其他所有用户的绘制数据，非实时，一个个完整的操作，只接受数据 绘制 todo 测试如果每个用户使用一个画板内存问题
  */
 public class PaletteActivity extends AppCompatActivity {
     private static final String TAG = "PaletteActivity";
@@ -41,6 +41,12 @@ public class PaletteActivity extends AppCompatActivity {
     public static final int CLEAR = 8;
     public static final int MSG_CHANGE_VIDEO_SORUCE = 9;
     public static final int MSG_UPDATE_OPERATION = 10;
+    /**
+     * 画笔颜色
+     */
+    public static int[] sPaintColors = {R.color.palette_blue, R.color.palette_green, R.color.palette_cyan, R.color.palette_red,
+            R.color.palette_pink, R.color.palette_orange, R.color.palette_black, R.color.palette_yellow};
+
     private ActivityPaletteBinding mBinding;
     private volatile boolean start = true;
     private DatagramSocket mDatagramSocket;
@@ -69,7 +75,10 @@ public class PaletteActivity extends AppCompatActivity {
             mUserid = 2;
             mBinding.palette.setPaintColor(Color.YELLOW);
         }
+//        设置当前用户标识
         mBinding.palette.setUserId(mUserid);
+//        设置画笔默认颜色
+        setPaintColor(0);
         Log.d(TAG, host + " __ " + mUserid);
         new Thread() {
             @Override
@@ -138,6 +147,7 @@ public class PaletteActivity extends AppCompatActivity {
      *
      * @param view
      */
+    @Deprecated
     public void setDrawPaintType(View view) {
         view.requestFocusFromTouch();
         switch (view.getId()) {
@@ -153,9 +163,32 @@ public class PaletteActivity extends AppCompatActivity {
         }
     }
 
-    public void operatePalette(View view) {
-        view.requestFocusFromTouch();
-        switch (view.getId()) {
+    /**
+     * 设置画笔类型
+     *
+     * @param index
+     */
+    public void setDrawPaintType(int index) {
+        switch (index) {
+            case 0:
+                mBinding.palette.setDrawPathMode();
+                break;
+            case 1:
+                mBinding.palette.setDrawLineMode();
+                break;
+            case 2:
+                mBinding.palette.setDrawOvalMode();
+                break;
+            default:
+                mBinding.palette.setDrawPathMode();
+
+        }
+    }
+
+
+
+    public void operatePalette(int viewId) {
+        switch (viewId) {
             case R.id.tv_clearPalette:
                 mBinding.palette.clearPaletteByHand();
                 break;
@@ -169,6 +202,7 @@ public class PaletteActivity extends AppCompatActivity {
         }
     }
 
+    @Deprecated
     public void setDrawText(View view) {
         switch (view.getId()) {
             case R.id.tv_text_one:
@@ -178,31 +212,50 @@ public class PaletteActivity extends AppCompatActivity {
                 mBinding.palette.setDrawTextMode("shine");
                 break;
         }
-
     }
+
+    /**
+     * 设置画笔要绘制的文本
+     * @param text
+     */
+    public void setDrawText(String text) {
+        if (!TextUtils.isEmpty(text)) {
+            mBinding.palette.setDrawTextMode(text);
+        }
+    }
+
+    /**
+     * 根据索引把对应的颜色资源传给画板
+     * @param index
+     */
+    public void setPaintColor(int index) {
+        int color = getResources().getColor(sPaintColors[index]);
+        mBinding.palette.setPaintColor(color);
+    }
+
 
     public void changeVideoSouce(View view) {
         switch (view.getId()) {
             case R.id.btn_one:
                 mBinding.palette.changeVideoSource("one");
                 mBinding.palettePublic.changeVideoSource("one");
-                mBinding.palette.setUserId(mUserid);
+//                mBinding.palette.setUserId(mUserid);
                 break;
             case R.id.btn_two:
                 mBinding.palette.changeVideoSource("two");
-                mBinding.palette.setUserId(mUserid);
+//                mBinding.palette.setUserId(mUserid);
                 mBinding.palettePublic.changeVideoSource("two");
 
                 break;
             case R.id.btn_three:
                 mBinding.palette.changeVideoSource("three");
-                mBinding.palette.setUserId(mUserid);
+//                mBinding.palette.setUserId(mUserid);
                 mBinding.palettePublic.changeVideoSource("three");
 
                 break;
             case R.id.btn_four:
                 mBinding.palette.changeVideoSource("four");
-                mBinding.palette.setUserId(mUserid);
+//                mBinding.palette.setUserId(mUserid);
                 mBinding.palettePublic.changeVideoSource("four");
 
                 break;

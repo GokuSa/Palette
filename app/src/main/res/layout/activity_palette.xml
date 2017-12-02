@@ -89,6 +89,8 @@
             android:layout_alignParentEnd="true"
             android:layout_marginTop="100dp"
             />
+
+        <!--deprecast-->
         <LinearLayout
             android:layout_width="200dp"
             android:layout_height="match_parent"
@@ -197,7 +199,7 @@
             <TextView
                 android:id="@+id/tv_clearPalette"
                 style="@style/PaletteText"
-                android:drawableStart="@drawable/mt_huaban_eraseall"
+                android:drawableStart="@drawable/bg_clear_palette"
                 android:onClick="operatePalette"
                 android:text="清空画板"
                 />
@@ -205,7 +207,7 @@
             <TextView
                 android:id="@+id/tv_erase"
                 style="@style/PaletteText"
-                android:drawableStart="@drawable/mt_huaban_erase"
+                android:drawableStart="@drawable/bg_erase_palette"
                 android:onClick="operatePalette"
                 android:text="橡皮擦"
                 />
@@ -213,7 +215,7 @@
             <TextView
                 android:id="@+id/tv_openPalette"
                 style="@style/PaletteText"
-                android:drawableStart="@drawable/mt_huaban_kaiqi"
+                android:drawableStart="@drawable/bg_switch_palette"
                 android:onClick="operatePalette"
                 android:text="关闭画板"
                 />

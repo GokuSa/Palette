@@ -13,8 +13,8 @@
 
         <ImageView
             android:id="@+id/icon"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             tools:background="@mipmap/ic_launcher"/>
 
         <TextView

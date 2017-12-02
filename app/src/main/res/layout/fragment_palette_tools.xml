@@ -2,13 +2,41 @@
 
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
     >
+
+    <data>
+
+        <variable
+            name="paletteTools"
+            type="beijing.hanhua.sketchpad.PaletteToolsFragment"/>
+    </data>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_palette_tools"
         android:orientation="vertical"
         >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:text="当前操作 "/>
+            <TextView
+                android:id="@+id/tv_paint_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                tools:text="demo"
+                android:gravity="center"/>
+        </LinearLayout>
 
         <android.support.design.widget.TabLayout
             android:id="@+id/tabs"
@@ -24,24 +52,28 @@
             android:layout_width="match_parent"
             android:layout_height="160dp"
             />
+
         <TextView
             android:id="@+id/tv_clearPalette"
             style="@style/PaletteText"
-            android:drawableStart="@drawable/mt_huaban_eraseall"
+            android:drawableStart="@drawable/bg_clear_palette"
+            android:onClick="@{paletteTools.operatePalette}"
             android:text="清空画板"
             />
 
         <TextView
             android:id="@+id/tv_erase"
             style="@style/PaletteText"
-            android:drawableStart="@drawable/mt_huaban_erase"
+            android:drawableStart="@drawable/bg_erase_palette"
+            android:onClick="@{paletteTools.operatePalette}"
             android:text="橡皮擦"
             />
 
         <TextView
             android:id="@+id/tv_openPalette"
             style="@style/PaletteText"
-            android:drawableStart="@drawable/mt_huaban_kaiqi"
+            android:drawableStart="@drawable/bg_switch_palette"
+            android:onClick="@{paletteTools.operatePalette}"
             android:text="关闭画板"
             />
     </LinearLayout>
